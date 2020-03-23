@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">CityReport</string>
+    <string name="title_activity_location_check">Map</string>
 </resources>
