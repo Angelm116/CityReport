@@ -10,6 +10,7 @@ import android.Manifest;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Location;
+import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -37,175 +38,81 @@ import java.util.List;
 import static com.google.android.gms.location.LocationServices.getFusedLocationProviderClient;
 
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements locationCheckFragment.OnFragmentInteractionListener,
+        ComplaintFragment.OnFragmentInteractionListener, DescriptionFragment.OnFragmentInteractionListener{
 
 
-    TextView textView;
-    private ViewPager screenPager;
-    IntroViewPagerAdapter introViewPagerAdapter ;
+    ViewPager viewPager;
+    SectionsPagerAdapter sectionsPagerAdapter;
     TabLayout tabIndicator;
     Button btnNext;
-    int position = 0 ;
-    Button btnGetStarted;
-    Animation btnAnim ;
-    TextView tvSkip;
+    LatLng latLng;
+
+    //overview: this app has 3 pages represented by fragments, enclosed in a tablayout, and controlled by a viewpager
+    // page 1 or locationcheckfragment, gets the user's location, displays it, asks for confirmation and trasitions to the next page.
+    // page 2 or complaintfragment, allows the user to choose a category for their complaint and moves on to the next page
+    // page 3 or descriptionfragment, prompts the user for a description, allows them to add a picture and submit. STILL NEEDS WORK (A LOT lol)
+    // the idea is that as the user provides us with info in the app, we store that information in an object, so that we can simply upload
+    // that object to the server
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
 
-        // make the activity on full screen
+        // This code makes the activity on full screen
         requestWindowFeature(Window.FEATURE_NO_TITLE);
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
                 WindowManager.LayoutParams.FLAG_FULLSCREEN);
 
 
+        // this code inflates the layout of the mainactivity
         setContentView(R.layout.activity_intro);
 
 
-        // ini views
-        btnNext = findViewById(R.id.btn_next);
-        btnGetStarted = findViewById(R.id.btn_get_started);
+        // This code initializes the variables
+        btnNext = findViewById(R.id.btn_next);                         // this is the "next" button on the right left corner
         tabIndicator = findViewById(R.id.tab_indicator);              // this is the dots in the bottom left corner
-        btnAnim = AnimationUtils.loadAnimation(getApplicationContext(),R.anim.button_animation);
-        //tvSkip = findViewById(R.id.tv_skip);
 
-        // fill list screen
-        // this is for the tablayout, the dots in the bottom left corner of the screen
 
-        final List<ScreenItem> mList = new ArrayList<>();
-        mList.add(new ScreenItem("Fresh Food","Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua, consectetur  consectetur adipiscing elit",R.drawable.img1));
-        mList.add(new ScreenItem("Fast Delivery","Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua, consectetur  consectetur adipiscing elit",R.drawable.img2));
-        mList.add(new ScreenItem("Easy Payment","Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua, consectetur  consectetur adipiscing elit",R.drawable.img3));
-        mList.add(new ScreenItem("Easy Payment","Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua, consectetur  consectetur adipiscing elit",R.drawable.img3));
 
-        // setup viewpager
-        screenPager =findViewById(R.id.screen_viewpager);
-        introViewPagerAdapter = new IntroViewPagerAdapter(this,mList);
-        screenPager.setAdapter(introViewPagerAdapter);
+        // setup viewpager; The ViewPager is like a container for all the fragment; it is in
+        // charge of transitioning the view of the page from fragment to fragment, hence "viewpager".
+        // The PagerAdapter tells the viewpager which fragment to display
+        viewPager =findViewById(R.id.screen_viewpager);
+        sectionsPagerAdapter = new SectionsPagerAdapter(this, getSupportFragmentManager());
+        viewPager.setAdapter(sectionsPagerAdapter);
 
         // setup tablayout with viewpager, so that the tab layout reacts to the change in pages
-        tabIndicator.setupWithViewPager(screenPager);
+        // The tablayout is basically the layout where all of this is taking place, it includes
+        // the three dots on the bottom and their animation and it allows us to swipe among pages
+        tabIndicator.setupWithViewPager(viewPager);
 
-
-        // next button click Listner
-        btnNext.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-
-                position = screenPager.getCurrentItem();
-                if (position < mList.size()) {
-
-                    position++;
-                    screenPager.setCurrentItem(position);
-
-
-                }
-
-                if (position == mList.size()-1) { // when we rech to the last screen
-
-                    // TODO : show the GETSTARTED Button and hide the indicator and the next button
-
-                    loaddLastScreen();
-
-
-                }
-
-
-
-            }
-        });
-
-        // tablayout add change listener
-        tabIndicator.addOnTabSelectedListener(new TabLayout.BaseOnTabSelectedListener() {
-            @Override
-            public void onTabSelected(TabLayout.Tab tab) {
-
-                if (tab.getPosition() == mList.size()-1) {
-
-                    loaddLastScreen();
-
-                }
-
-
-            }
-
-            @Override
-            public void onTabUnselected(TabLayout.Tab tab) {
-
-            }
-
-            @Override
-            public void onTabReselected(TabLayout.Tab tab) {
-
-            }
-        });
-
-
-
-        // Get Started button click listener
-
-        btnGetStarted.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-
-
-                //open main activity
-
-                Intent mainActivity = new Intent(getApplicationContext(),MainActivity.class);
-                startActivity(mainActivity);
-                // also we need to save a boolean value to storage so next time when the user run the app
-                // we could know that he is already checked the intro screen activity
-                // i'm going to use shared preferences to that process
-                //savePrefsData();
-                finish();
-
-
-
-            }
-        });
-
-        // skip button click listener
-
-//      //  tvSkip.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View v) {
-//                screenPager.setCurrentItem(mList.size());
-//            }
-//        });
-
-        //textView = findViewById(R.id.text_view);
+        // this method is for the maps portion of the app
         getLastLocation();
     }
 
-    public void onLocationChanged(Location location) {
-        // New location has now been determined
-        String msg = "Updated Location: " +
-                Double.toString(location.getLatitude()) + "," +
-                Double.toString(location.getLongitude());
-
-
-        //textView.setText(msg);
-       // Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();
-        // You can now create a LatLng Object for use with maps
-       // LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
+    // This function gets executed whenever the user chooses a complaint in the
+    // complaint fragment; IT STILL NEEDS WORK
+    // this function is supposed to add the users selection (what complaint) to
+    // the object that packs all the info that we will send to the server
+    // also it needs to show the last screen
+    public void complaintButton(final View view)
+    {
+        viewPager.setCurrentItem(2);// sets screen to last screen
     }
 
-    private void loaddLastScreen() {
+    // the purpose of this method is to be called from the locationCheckfragment
+    // it acts as an intermediate between getlastLocation() and locationcheckfragment
+    public LatLng getLatLng() {
 
-        btnNext.setVisibility(View.INVISIBLE);
-        btnGetStarted.setVisibility(View.VISIBLE);
-       // tvSkip.setVisibility(View.INVISIBLE);
-        tabIndicator.setVisibility(View.INVISIBLE);
-        // TODO : ADD an animation the getstarted button
-        // setup animation
-        btnGetStarted.setAnimation(btnAnim);
-
-
-
+        getLastLocation();
+        return latLng;
     }
 
+    // the methods gets the required permissions for the location and gets the current location
+    // honestly this method miraculously started working once I gave up on it... so just know that it works
+    // for now, no need worry about it
     public void getLastLocation() {
 
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.INTERNET)
@@ -246,7 +153,8 @@ public class MainActivity extends AppCompatActivity {
                     public void onSuccess(Location location) {
                         // GPS location can be null if GPS is switched off
                         if (location != null) {
-                            onLocationChanged(location);
+                            latLng = new LatLng(location.getLatitude(), location.getLongitude());
+                            //onLocationChanged(location);
                         }
                     }
                 })
@@ -257,5 +165,11 @@ public class MainActivity extends AppCompatActivity {
                         e.printStackTrace();
                     }
                 });
+    }
+
+    // you can ignore this
+    @Override
+    public void onFragmentInteraction(Uri uri) {
+
     }
 }

@@ -12,6 +12,8 @@
         android:layout_marginLeft="30dp"
         android:layout_marginRight="2dp"
         android:minHeight="80dp"
+        android:clickable="true"
+        android:onClick="complaintButton"
         app:cardBackgroundColor="@color/whiteBodyColor"
         app:cardElevation="2dp"
         app:cardCornerRadius="16dp">
@@ -21,10 +23,10 @@
             android:layout_height="wrap_content"
             android:orientation="vertical"
             android:layout_gravity="center"
-            android:layout_marginLeft="50dp">
+            android:layout_marginLeft="30dp">
 
             <TextView
-                android:text="Plumping"
+                android:text="Other"
                 style="@style/viewParent.headerText"
                 android:textColor="@color/primaryTextColor" />
 

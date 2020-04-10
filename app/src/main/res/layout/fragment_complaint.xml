@@ -38,13 +38,25 @@
                 android:layout_marginBottom="20dp"
                 android:text="Services" />
 
-            <include layout="@layout/card_services" />
+            <include
+                layout="@layout/complain_card_pedestrian_danger"
+                android:clickable="true"
+                android:onClick="complaintButton" />
 
-            <include layout="@layout/card_services" />
+            <include
+                layout="@layout/complaint_card_intersection"
+                android:clickable="true"
+                android:onClick="complaintButton" />
 
-            <include layout="@layout/card_services" />
+            <include
+                layout="@layout/complaint_card_physical_damage"
+                android:clickable="true"
+                android:onClick="complaintButton" />
 
-            <include layout="@layout/card_services" />
+            <include
+                layout="@layout/complaint_card_other"
+                android:clickable="true"
+                android:onClick="complaintButton" />
 
 
         </LinearLayout>
